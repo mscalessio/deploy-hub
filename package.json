@@ -1,26 +1,60 @@
 {
-  "name": "vercel-clone",
+  "name": "deploy-hub",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
+    "supabase:status": "npx supabase status",
+    "supabase:restart": "npm run supabase:stop && npm run supabase:start",
+    "supabase:reset": "npx supabase db reset",
+    "supabase:link": "npx supabase link",
+    "supabase:generate-types": "npx supabase gen types typescript --local --schema public > src/types_db.ts",
+    "supabase:generate-migration": "npx supabase db diff | npx supabase migration new",
+    "supabase:generate-seed": "npx supabase db dump --data-only -f supabase/seed.sql",
+    "supabase:push": "npx supabase db push",
+    "supabase:pull": "npx supabase db pull"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.6.0",
+    "@gitbeaker/rest": "^41.3.0",
+    "@octokit/auth-oauth-app": "^8.1.1",
+    "@octokit/rest": "^21.0.2",
+    "@octokit/webhooks": "^13.4.1",
+    "@radix-ui/react-avatar": "^1.1.1",
+    "@radix-ui/react-collapsible": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-dropdown-menu": "^2.1.2",
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-select": "^2.1.2",
+    "@radix-ui/react-separator": "^1.1.0",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-tooltip": "^1.1.4",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.46.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.464.0",
+    "next": "15.0.3",
     "react": "19.0.0-rc-66855b96-20241106",
     "react-dom": "19.0.0-rc-66855b96-20241106",
-    "next": "15.0.3"
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
     "eslint": "^8",
-    "eslint-config-next": "15.0.3"
+    "eslint-config-next": "15.0.3",
+    "postcss": "^8",
+    "supabase": "^2.0.0",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
   }
 }
