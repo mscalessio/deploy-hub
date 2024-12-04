@@ -1,15 +1,15 @@
 import { Octokit } from '@octokit/rest';
 import { createOAuthAppAuth } from '@octokit/auth-oauth-app';
 import { Webhooks } from '@octokit/webhooks';
-import {
-  GitService,
+import type {
   GitRepository,
   GitBranch,
   GitWebhook,
   BranchProtectionRule,
   GitUser,
   GitProviderConfig
-} from './base-git-service';
+} from '@/lib/git/types';
+import type { GitService } from "@/lib/git/base-git-service";
 
 export class GitHubService implements GitService {
   private octokit: Octokit | null = null;
@@ -220,15 +220,15 @@ export class GitHubService implements GitService {
         statusChecks: data.required_status_checks?.contexts || [],
       };
     } catch (error) {
-      if ((error as any).status === 404) {
+      if ((error as unknown as { status: number }).status === 404) {
         return null;
       }
       throw error;
     }
   }
 
-  validateWebhookPayload(payload: any, signature: string): boolean {
+  async validateWebhookPayload(payload: string, signature: string): Promise<boolean> {
     if (!this.webhooks) throw new Error('GitHub service not initialized');
-    return this.webhooks.verify(payload, signature);
+    return await this.webhooks.verify(payload, signature);
   }
 } 

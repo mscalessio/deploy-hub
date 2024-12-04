@@ -1,4 +1,4 @@
-import {
+import type {
   GitRepository,
   GitBranch,
   GitWebhook,
@@ -78,5 +78,5 @@ export interface GitService {
   /**
    * Validate webhook payload
    */
-  validateWebhookPayload(payload: any, signature: string): boolean;
+  validateWebhookPayload(payload: string, signature: string): Promise<boolean>;
 } 

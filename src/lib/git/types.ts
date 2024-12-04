@@ -22,7 +22,7 @@ export interface GitBranch {
 
 export interface GitWebhook {
   id: string;
-  url: string;
+  url?: string;
   active: boolean;
   events: string[];
   createdAt: string;

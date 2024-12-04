@@ -1,32 +1,32 @@
-import { Gitlab } from '@gitbeaker/rest';
-import crypto from 'crypto';
-import {
-  GitService,
+import { Gitlab } from "@gitbeaker/rest";
+import type { GitService } from "./base-git-service";
+import type { GitProviderConfig } from "./types";
+import crypto from "crypto";
+import type {
   GitRepository,
   GitBranch,
   GitWebhook,
   BranchProtectionRule,
   GitUser,
-  GitProviderConfig
-} from './base-git-service';
+} from "@/lib/git/types";
 
 export class GitLabService implements GitService {
-  private gitlab: Gitlab | null = null;
+  private gitlab: InstanceType<typeof Gitlab> | null = null;
   private config: GitProviderConfig | null = null;
 
   async initialize(config: GitProviderConfig): Promise<void> {
     this.config = config;
     this.gitlab = new Gitlab({
-      host: 'https://gitlab.com',
+      host: "https://gitlab.com",
       oauthToken: config.clientSecret,
     });
   }
 
   async getCurrentUser(): Promise<GitUser> {
-    if (!this.gitlab) throw new Error('GitLab service not initialized');
+    if (!this.gitlab) throw new Error("GitLab service not initialized");
 
     const data = await this.gitlab.Users.current();
-    
+
     return {
       id: data.id.toString(),
       login: data.username,
@@ -37,24 +37,24 @@ export class GitLabService implements GitService {
   }
 
   async listRepositories(): Promise<GitRepository[]> {
-    if (!this.gitlab) throw new Error('GitLab service not initialized');
+    if (!this.gitlab) throw new Error("GitLab service not initialized");
 
     const data = await this.gitlab.Projects.all({ membership: true });
-    
-    return data.map(repo => ({
+
+    return data.map((repo) => ({
       id: repo.id.toString(),
       name: repo.name,
       fullName: repo.path_with_namespace,
-      private: repo.visibility === 'private',
+      private: repo.visibility === "private",
       description: repo.description,
       defaultBranch: repo.default_branch,
       cloneUrl: repo.http_url_to_repo,
-      provider: 'gitlab' as const,
+      provider: "gitlab" as const,
     }));
   }
 
   async getRepository(owner: string, name: string): Promise<GitRepository> {
-    if (!this.gitlab) throw new Error('GitLab service not initialized');
+    if (!this.gitlab) throw new Error("GitLab service not initialized");
 
     const data = await this.gitlab.Projects.show(`${owner}/${name}`);
 
@@ -62,20 +62,20 @@ export class GitLabService implements GitService {
       id: data.id.toString(),
       name: data.name,
       fullName: data.path_with_namespace,
-      private: data.visibility === 'private',
+      private: data.visibility === "private",
       description: data.description,
       defaultBranch: data.default_branch,
       cloneUrl: data.http_url_to_repo,
-      provider: 'gitlab' as const,
+      provider: "gitlab" as const,
     };
   }
 
   async listBranches(owner: string, repo: string): Promise<GitBranch[]> {
-    if (!this.gitlab) throw new Error('GitLab service not initialized');
+    if (!this.gitlab) throw new Error("GitLab service not initialized");
 
     const data = await this.gitlab.Branches.all(`${owner}/${repo}`);
 
-    return data.map(branch => ({
+    return data.map((branch) => ({
       name: branch.name,
       commit: {
         sha: branch.commit.id,
@@ -91,15 +91,15 @@ export class GitLabService implements GitService {
     webhookUrl: string,
     events: string[]
   ): Promise<GitWebhook> {
-    if (!this.gitlab) throw new Error('GitLab service not initialized');
+    if (!this.gitlab) throw new Error("GitLab service not initialized");
 
     // Map GitHub-style events to GitLab events
-    const gitlabEvents = events.map(event => {
+    const gitlabEvents = events.map((event) => {
       switch (event) {
-        case 'push':
-          return 'push_events';
-        case 'pull_request':
-          return 'merge_requests_events';
+        case "push":
+          return "push_events";
+        case "pull_request":
+          return "merge_requests_events";
         default:
           return event;
       }
@@ -109,8 +109,8 @@ export class GitLabService implements GitService {
       `${owner}/${repo}`,
       webhookUrl,
       {
-        push_events: gitlabEvents.includes('push_events'),
-        merge_requests_events: gitlabEvents.includes('merge_requests_events'),
+        push_events: gitlabEvents.includes("push_events"),
+        merge_requests_events: gitlabEvents.includes("merge_requests_events"),
         token: this.config?.clientSecret,
       }
     );
@@ -124,23 +124,30 @@ export class GitLabService implements GitService {
     };
   }
 
-  async deleteWebhook(owner: string, repo: string, webhookId: string): Promise<void> {
-    if (!this.gitlab) throw new Error('GitLab service not initialized');
+  async deleteWebhook(
+    owner: string,
+    repo: string,
+    webhookId: string
+  ): Promise<void> {
+    if (!this.gitlab) throw new Error("GitLab service not initialized");
 
-    await this.gitlab.ProjectHooks.remove(`${owner}/${repo}`, parseInt(webhookId, 10));
+    await this.gitlab.ProjectHooks.remove(
+      `${owner}/${repo}`,
+      parseInt(webhookId, 10)
+    );
   }
 
   async listWebhooks(owner: string, repo: string): Promise<GitWebhook[]> {
-    if (!this.gitlab) throw new Error('GitLab service not initialized');
+    if (!this.gitlab) throw new Error("GitLab service not initialized");
 
     const data = await this.gitlab.ProjectHooks.all(`${owner}/${repo}`);
 
-    return data.map(hook => ({
+    return data.map((hook) => ({
       id: hook.id.toString(),
       url: hook.url,
       active: true,
       events: Object.entries(hook)
-        .filter(([key, value]) => key.endsWith('_events') && value === true)
+        .filter(([key, value]) => key.endsWith("_events") && value === true)
         .map(([key]) => key),
       createdAt: hook.created_at,
     }));
@@ -151,12 +158,16 @@ export class GitLabService implements GitService {
     repo: string,
     rule: BranchProtectionRule
   ): Promise<void> {
-    if (!this.gitlab) throw new Error('GitLab service not initialized');
+    if (!this.gitlab) throw new Error("GitLab service not initialized");
 
-    await this.gitlab.ProtectedBranches.protect(`${owner}/${repo}`, rule.pattern, {
-      merge_access_level: rule.requirePullRequest ? 40 : 0, // 40 = maintainer
-      push_access_level: 0, // 0 = no one can push directly
-    });
+    await this.gitlab.ProtectedBranches.protect(
+      `${owner}/${repo}`,
+      rule.pattern,
+      {
+        merge_access_level: rule.requirePullRequest ? 40 : 0, // 40 = maintainer
+        push_access_level: 0, // 0 = no one can push directly
+      }
+    );
   }
 
   async removeBranchProtection(
@@ -164,7 +175,7 @@ export class GitLabService implements GitService {
     repo: string,
     branch: string
   ): Promise<void> {
-    if (!this.gitlab) throw new Error('GitLab service not initialized');
+    if (!this.gitlab) throw new Error("GitLab service not initialized");
 
     await this.gitlab.ProtectedBranches.unprotect(`${owner}/${repo}`, branch);
   }
@@ -174,10 +185,13 @@ export class GitLabService implements GitService {
     repo: string,
     branch: string
   ): Promise<BranchProtectionRule | null> {
-    if (!this.gitlab) throw new Error('GitLab service not initialized');
+    if (!this.gitlab) throw new Error("GitLab service not initialized");
 
     try {
-      const data = await this.gitlab.ProtectedBranches.show(`${owner}/${repo}`, branch);
+      const data = await this.gitlab.ProtectedBranches.show(
+        `${owner}/${repo}`,
+        branch
+      );
 
       return {
         pattern: branch,
@@ -186,23 +200,31 @@ export class GitLabService implements GitService {
         statusChecks: [],
       };
     } catch (error) {
-      if ((error as any).response?.status === 404) {
+      if (
+        (error as unknown as { response: { status: number } }).response
+          ?.status === 404
+      ) {
         return null;
       }
       throw error;
     }
   }
 
-  validateWebhookPayload(payload: any, signature: string): boolean {
-    if (!this.config?.clientSecret) throw new Error('GitLab service not initialized');
-    
+  async validateWebhookPayload(
+    payload: string,
+    signature: string
+  ): Promise<boolean> {
+    if (!this.config?.clientSecret)
+      throw new Error("GitLab service not initialized");
+
     const token = this.config.clientSecret;
-    const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    const payloadStr =
+      typeof payload === "string" ? payload : JSON.stringify(payload);
     const expectedSignature = crypto
-      .createHmac('sha256', token)
+      .createHmac("sha256", token)
       .update(payloadStr)
-      .digest('hex');
+      .digest("hex");
 
     return signature === expectedSignature;
   }
-} 
+}

@@ -1,6 +1,6 @@
-import { GitProvider, GitProviderConfig } from './base-git-service';
-import { GitHubService } from './github-service';
-import { GitLabService } from './gitlab-service';
+import type { GitProvider, GitProviderConfig } from "@/lib/git/types";
+import { GitHubService } from "./github-service";
+import { GitLabService } from "./gitlab-service";
 
 export class GitServiceFactory {
   private static instance: GitServiceFactory;
@@ -21,7 +21,8 @@ export class GitServiceFactory {
     let service = this.services.get(provider);
 
     if (!service) {
-      service = provider === 'github' ? new GitHubService() : new GitLabService();
+      service =
+        provider === "github" ? new GitHubService() : new GitLabService();
       await service.initialize(config);
       this.services.set(provider, service);
     }
@@ -36,4 +37,4 @@ export class GitServiceFactory {
   public clearAll() {
     this.services.clear();
   }
-} 
+}
